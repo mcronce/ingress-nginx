@@ -163,11 +163,20 @@ function _M.rewrite()
       end
     end
 
-    local uri = string_format("https://%s%s", redirect_host(), request_uri)
+    local tls_scheme = 'https'
+    if ngx.var.http_connection:lower() == 'upgrade' and ngx.var.http_upgrade:lower() == 'websocket' then
+      tls_scheme = 'wss'
+    end
 
+    local uri = string_format("%s://%s%s", tls_scheme, redirect_host(), request_uri)
     if location_config.use_port_in_redirects then
-      uri = string_format("https://%s:%s%s", redirect_host(),
-        config.listen_ports.https, request_uri)
+      uri = string_format(
+        "%s://%s:%s%s",
+        tls_scheme,
+        redirect_host(),
+        config.listen_ports.https,
+        request_uri
+      )
     end
 
     return ngx_redirect(uri, config.http_redirect_code)
